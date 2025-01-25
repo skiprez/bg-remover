@@ -1,101 +1,104 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { motion } from 'framer-motion';
+import { FaCloudUploadAlt, FaDownload, FaPalette } from 'react-icons/fa';
+import { SketchPicker } from 'react-color';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [isLoading, setIsLoading] = useState(false);
+  const [processedImage, setProcessedImage] = useState(null);
+  const [color, setColor] = useState('#ffffff');
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const onDrop = useCallback(async (acceptedFiles) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      setIsLoading(true);
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('color', color);
+
+      try {
+        const response = await fetch('/api/remove-bg', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          setProcessedImage(url);
+        } else {
+          console.error('Error processing image:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error processing image:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, [color]);
+
+  const { getRootProps, getInputProps } = useDropzone({ onDrop, accept: 'image/*' });
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-purple-100 text-purple-900">
+      <motion.div
+        className="bg-white bg-opacity-90 backdrop-blur-md p-8 rounded-lg shadow-lg max-w-md w-full"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h1 className="text-3xl font-bold mb-4 text-center">Remove Background from Image</h1>
+        <div
+          {...getRootProps()}
+          className="flex flex-col items-center justify-center p-6 mb-4 border-2 border-dashed border-purple-300 rounded-md text-purple-700 bg-white bg-opacity-50 cursor-pointer"
+        >
+          <input {...getInputProps()} />
+          <FaCloudUploadAlt className="text-4xl text-purple-500 mb-2" />
+          <p>Drag & drop an image here, or click to select one</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div className="flex items-center justify-center mb-4">
+          <button
+            onClick={() => setShowColorPicker(!showColorPicker)}
+            className="flex items-center justify-center p-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md"
+          >
+            <FaPalette className="mr-2" />
+            {showColorPicker ? 'Hide Color Picker' : 'Show Color Picker'}
+          </button>
+        </div>
+        {showColorPicker && (
+          <div className="flex justify-center mb-4">
+            <SketchPicker
+              color={color}
+              onChangeComplete={(newColor) => setColor(newColor.hex)}
+            />
+          </div>
+        )}
+        <p className="text-center mt-2">This is a beta application. It may contain bugs or other issues.</p>
+
+        {processedImage && (
+          <motion.div
+            className="mt-4 text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-xl mb-2">Processed Image</h2>
+            <img src={processedImage} alt="Processed" className="max-w-full border border-purple-300 rounded-md mb-2 bg-white" />
+            <a
+              href={processedImage}
+              download="processed-image.png"
+              className="flex justify-center items-center text-purple-200 font-bold inline-block bg-purple-600 hover:bg-purple-700 transition-colors p-2 rounded-md"
+            >
+              <FaDownload className="inline-block mr-2" />
+              Download Image
+            </a>
+          </motion.div>
+        )}
+      </motion.div>
     </div>
   );
 }
